@@ -77,18 +77,36 @@ function Settings({ onDisableCameras }: { onDisableCameras: () => void }) {
 
 export default function Home() {
   const [client, setClient] = useState<mqtt.MqttClient | null>(null);
-  const [showStatic, setShowStatic] = useState(false);
+  const [camerasDisabled, setShowStatic] = useState(false);
 
-  const CAMERA_DISABLED_TOPIC = "muddescapes/data/Security Cameras/disabled";
+  const CAMERAS_DISABLED_TOPIC = "muddescapes/data/Security Cameras/disabled";
 
   useEffect(() => {
     const client = mqtt.connect("wss://broker.hivemq.com:8884", {
       path: "/mqtt",
     });
 
+    function sendState() {
+      // hack to not add camerasDisabled as a dependency
+      // otherwise, client will disconnect and reconnect when camerasDisabled changes
+      setShowStatic((curr) => {
+        client.publish(CAMERAS_DISABLED_TOPIC, curr ? "1" : "0", {
+          qos: 2,
+        });
+        return curr;
+      });
+    }
+
     client.on("connect", () => {
       console.debug("connected");
-      client.publish(CAMERA_DISABLED_TOPIC, "0", { qos: 2 });
+      sendState();
+
+      // subscribe to general topic to know when to send state
+      client.subscribe("muddescapes", { qos: 2 });
+    });
+
+    client.on("message", (topic, message) => {
+      sendState();
     });
 
     setClient(client);
@@ -103,19 +121,19 @@ export default function Home() {
       <div className="flex">
         <VideoPlayer
           name="Camera 1 - Main Gallery"
-          showStatic={showStatic}
+          showStatic={camerasDisabled}
           streamLink="http://localhost:8083/stream/cam1/channel/0/webrtc?uuid=cam1&channel=0"
         ></VideoPlayer>
         <VideoPlayer
           name="Camera 2 - Security"
-          showStatic={showStatic}
+          showStatic={camerasDisabled}
           streamLink="http://localhost:8083/stream/cam2/channel/0/webrtc?uuid=cam2&channel=0"
         ></VideoPlayer>
       </div>
       <Settings
         onDisableCameras={() => {
           setShowStatic(true);
-          client?.publish(CAMERA_DISABLED_TOPIC, "1", { qos: 2 });
+          client?.publish(CAMERAS_DISABLED_TOPIC, "1", { qos: 2 });
         }}
       ></Settings>
     </>
