@@ -57,7 +57,7 @@ function Settings({ onDisableCameras }: { onDisableCameras: () => void }) {
         <button
           className={
             unlocked
-              ? "bg-red-300 hover:bg-red-400 p-2 m-2 rounded-lg"
+              ? "bg-green-300 hover:bg-green-400 p-2 m-2 rounded-lg"
               : "relative bg-gray-300/25 p-2 m-2 rounded-lg text-black/25"
           }
           onClick={() => onDisableCameras()}
