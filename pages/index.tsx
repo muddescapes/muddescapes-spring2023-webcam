@@ -1,13 +1,17 @@
 import VideoPlayer from "@/components/VideoPlayer";
 import { useEffect, useState } from "react";
-import { ArrowLeftIcon, LockClosedIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/solid";
 import mqtt from "mqtt";
 
 function Overlay({ success, visible }: { success: boolean; visible: boolean }) {
   return !visible ? null : (
     <div
       className={
-        "absolute top-0 left-0 w-full h-full flex items-center justify-center text-6xl pointer-events-none"
+        "absolute top-0 left-1/2 -translate-x-1/2 translate-y-1/2 text-6xl pointer-events-none z-50"
       }
     >
       <span
@@ -23,55 +27,72 @@ function Settings({ onDisableCameras }: { onDisableCameras: () => void }) {
   const [pw, setPw] = useState<string>("");
   const [unlocked, setUnlocked] = useState<boolean>(false);
   const [overlayVisible, setOverlayVisible] = useState<boolean>(false);
+  const [camerasDisabled, setCamerasDisabled] = useState<boolean>(false);
 
   return (
-    <>
-      <Overlay success={unlocked} visible={overlayVisible}></Overlay>
-      <div className="flex flex-col items-center">
-        <form
-          className="mt-3 flex"
-          onSubmit={(e) => {
-            if (!unlocked) {
-              setOverlayVisible(true);
-              setTimeout(() => setOverlayVisible(false), 2000);
-            }
+    <div className="flex flex-col items-center">
+      <form
+        className="mt-7 mb-7"
+        onSubmit={(e) => {
+          if (!unlocked) {
+            setOverlayVisible(true);
+            setTimeout(() => setOverlayVisible(false), 2000);
+          }
 
-            if (pw === "pica$50" && !unlocked) {
-              setUnlocked(true);
-            }
-            e.preventDefault();
-          }}
-        >
-          <label htmlFor="pw">Admin password:</label>
+          if (pw === "pica$50" && !unlocked) {
+            setUnlocked(true);
+          }
+          e.preventDefault();
+        }}
+      >
+        <label htmlFor="pw">Enter password:</label>
+        <div className="flex items-center">
           <input
             type="text"
             name="pw"
-            className="outline outline-1 ml-2"
+            className="outline outline-1 h-6"
             value={pw}
             onChange={(e) => setPw(e.target.value)}
+            disabled={unlocked}
           />
-          <button type="submit">
-            <ArrowLeftIcon className="w-5 h-5 mt-auto mb-auto" />
+          <button
+            type="submit"
+            className="outline outline-1 ml-1"
+            disabled={unlocked}
+          >
+            <ArrowRightIcon className="w-6 h-6 mt-auto mb-auto" />
           </button>
-        </form>
+        </div>
+      </form>
+      <div className="relative overflow-visible whitespace-nowrap">
+        <Overlay success={unlocked} visible={overlayVisible}></Overlay>
         <button
           className={
-            unlocked
-              ? "bg-green-300 hover:bg-green-400 p-2 m-2 rounded-lg"
-              : "relative bg-gray-300/25 p-2 m-2 rounded-lg text-black/25"
+            "relative m-6 p-3 text-lg animate-none " +
+            (!unlocked
+              ? "bg-gray-300 pointer-events-none text-gray-400"
+              : camerasDisabled
+              ? "bg-gray-300 pointer-events-none text-gray-400 line-through"
+              : "bg-green-400 hover:bg-green-500")
           }
-          onClick={() => onDisableCameras()}
+          onClick={() => {
+            setCamerasDisabled(true);
+            onDisableCameras();
+          }}
           disabled={!unlocked}
         >
           Disable cameras
-          {!unlocked && (
-            <div className="flex items-center justify-center absolute top-0 left-0 w-full h-full text-black">
-              <LockClosedIcon className="w-5 h-5" />
-            </div>
+          {/* make the background a child so the animation doesn't affect the button */}
+          {!unlocked ? (
+            <LockClosedIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-black" />
+          ) : !camerasDisabled ? (
+            <div className="absolute top-0 left-0 right-0 bottom-0 -m-3 bg-green-200 -z-10 animate-fade" />
+          ) : (
+            <CheckIcon className="absolute h-12 top-1/2 right-0 translate-x-full -translate-y-1/2 text-green-500" />
           )}
         </button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -123,11 +144,13 @@ export default function Home() {
           name="Camera 1 - Main Gallery"
           showStatic={camerasDisabled}
           streamLink="http://localhost:8083/stream/cam1/channel/0/webrtc?uuid=cam1&channel=0"
+          stopRecording={camerasDisabled}
         ></VideoPlayer>
         <VideoPlayer
           name="Camera 2 - Security"
           showStatic={camerasDisabled}
           streamLink="http://localhost:8083/stream/cam2/channel/0/webrtc?uuid=cam2&channel=0"
+          stopRecording={camerasDisabled}
         ></VideoPlayer>
       </div>
       <Settings

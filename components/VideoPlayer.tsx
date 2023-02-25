@@ -4,9 +4,11 @@ const VideoPlayer = ({
   streamLink,
   showStatic,
   name,
+  stopRecording,
 }: {
   streamLink: string;
   showStatic?: boolean;
+  stopRecording?: boolean;
   name: string;
 }) => {
   const videoRef = useCallback(
@@ -33,17 +35,22 @@ const VideoPlayer = ({
         const offer = await webRtc.createOffer();
         await webRtc.setLocalDescription(offer);
 
-        const response = await fetch(streamLink, {
-          method: "POST",
-          body: new URLSearchParams({
-            data: btoa(webRtc.localDescription!.sdp),
-          }),
-        });
+        try {
+          const response = await fetch(streamLink, {
+            method: "POST",
+            body: new URLSearchParams({
+              data: btoa(webRtc.localDescription!.sdp),
+            }),
+          });
 
-        const answer = await response.text();
-        await webRtc.setRemoteDescription(
-          new RTCSessionDescription({ type: "answer", sdp: atob(answer) })
-        );
+          const answer = await response.text();
+          await webRtc.setRemoteDescription(
+            new RTCSessionDescription({ type: "answer", sdp: atob(answer) })
+          );
+        } catch (e) {
+          console.error(e);
+          return;
+        }
       };
     },
     [streamLink, showStatic]
@@ -54,11 +61,13 @@ const VideoPlayer = ({
       <video className={"w-full h-full"} ref={videoRef} muted autoPlay loop>
         <source src="/static.mp4" type="video/mp4"></source>
       </video>
-      <div
-        className={
-          "absolute top-4 left-4 w-6 h-6 rounded-full bg-red-600 animate-blink"
-        }
-      ></div>
+      {!stopRecording && (
+        <div
+          className={
+            "absolute top-4 left-4 w-6 h-6 rounded-full bg-red-600 animate-blink"
+          }
+        ></div>
+      )}
       <span className={"absolute top-4 right-4 bg-black text-white"}>
         {name}
       </span>
