@@ -39,7 +39,7 @@ function Settings({ onDisableCameras }: { onDisableCameras: () => void }) {
             setTimeout(() => setOverlayVisible(false), 2000);
           }
 
-          if (pw === "pica$50" && !unlocked) {
+          if (pw === "ART42" && !unlocked) {
             setUnlocked(true);
           }
           e.preventDefault();
