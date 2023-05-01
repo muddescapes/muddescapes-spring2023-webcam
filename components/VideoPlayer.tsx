@@ -1,5 +1,3 @@
-import { useRef, useEffect, useCallback } from "react";
-
 const VideoPlayer = ({
   streamLink,
   showStatic,
@@ -11,56 +9,23 @@ const VideoPlayer = ({
   stopRecording?: boolean;
   name: string;
 }) => {
-  const videoRef = useCallback(
-    (node: HTMLVideoElement) => {
-      if (!node) return;
-
-      if (showStatic) {
-        node.srcObject = null;
-        node.play();
-        return;
-      }
-
-      // https://github.com/deepch/RTSPtoWeb/blob/82a88e1c20b64c9d72e5337de9108831780de14c/docs/examples/webrtc/main.js
-      const webRtc = new RTCPeerConnection();
-
-      webRtc.ontrack = (event) => {
-        node.srcObject = event.streams[0];
-        node.play();
-      };
-
-      webRtc.addTransceiver("video", { direction: "recvonly" });
-
-      webRtc.onnegotiationneeded = async () => {
-        const offer = await webRtc.createOffer();
-        await webRtc.setLocalDescription(offer);
-
-        try {
-          const response = await fetch(streamLink, {
-            method: "POST",
-            body: new URLSearchParams({
-              data: btoa(webRtc.localDescription!.sdp),
-            }),
-          });
-
-          const answer = await response.text();
-          await webRtc.setRemoteDescription(
-            new RTCSessionDescription({ type: "answer", sdp: atob(answer) })
-          );
-        } catch (e) {
-          console.error(e);
-          return;
-        }
-      };
-    },
-    [streamLink, showStatic]
+  let content = (
+    <video className={"w-full h-full"} muted autoPlay loop>
+      <source src="/static.mp4" type="video/mp4"></source>
+    </video>
   );
+  if (!showStatic) {
+    content = (
+      <iframe
+        className={"w-full h-[50vh] pointer-events-none"}
+        src={streamLink}
+      ></iframe>
+    );
+  }
 
   return (
     <div className={"relative flex-1 w-0 bg-black"}>
-      <video className={"w-full h-full"} ref={videoRef} muted autoPlay loop>
-        <source src="/static.mp4" type="video/mp4"></source>
-      </video>
+      {content}
       {!stopRecording && (
         <div
           className={

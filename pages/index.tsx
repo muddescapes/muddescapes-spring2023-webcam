@@ -143,13 +143,13 @@ export default function Home() {
         <VideoPlayer
           name="Camera 1 - Main Gallery"
           showStatic={camerasDisabled}
-          streamLink="http://localhost:8083/stream/cam1/channel/0/webrtc?uuid=cam1&channel=0"
+          streamLink="http://localhost:8889/muddescapes-camera-1/"
           stopRecording={camerasDisabled}
         ></VideoPlayer>
         <VideoPlayer
           name="Camera 2 - Security"
           showStatic={camerasDisabled}
-          streamLink="http://localhost:8083/stream/cam2/channel/0/webrtc?uuid=cam2&channel=0"
+          streamLink="http://localhost:8889/muddescapes-cam-2/"
           stopRecording={camerasDisabled}
         ></VideoPlayer>
       </div>
